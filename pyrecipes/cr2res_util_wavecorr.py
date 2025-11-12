@@ -1,5 +1,6 @@
 from typing import Any, Dict
 
+import cpl.core
 import cpl.ui
 
 
@@ -17,9 +18,37 @@ class WaveCorr(cpl.ui.PyRecipe):
         + "the sequence to a common reference frame."
     )
 
+    def __init__(self):
+        self.parameters = cpl.ui.ParameterList(
+            [
+                cpl.ui.ParameterValue(
+                    name="cr2res_util_wavecorr.ref-order",
+                    context="cr2res_util_wavecorr",
+                    description="Reference order number for wavelength alignment",
+                    default=1,
+                ),
+            ]
+        )
+
     def run(
         self, frameset: cpl.ui.FrameSet, settings: Dict[str, Any]
     ) -> cpl.ui.FrameSet:
+        # Get the reference order parameter
+        ref_order = settings.get("cr2res_util_wavecorr.ref-order", 1)
+        print(f"Reference order: {ref_order}")
+
+        # Process each input frame
         for frame in frameset:
-            print(f"Hello, {frame.file}!")
+            print(f"Processing frame: {frame.file}")
+            print(f"  Tag: {frame.tag}")
+            print(f"  Group: {frame.group}")
+
+            # Read the FITS table from the frame
+            try:
+                table = cpl.core.Table.load(frame.file, 1)
+                print(f"  Loaded table with {table.size()} rows")
+                print(f"  Table columns: {table.get_column_names()}")
+            except Exception as e:
+                print(f"  Error reading table: {e}")
+
         return cpl.ui.FrameSet()
