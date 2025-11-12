@@ -18,7 +18,7 @@ uv sync
 uv sync --all-extras
 
 # Install pre-commit hooks (IMPORTANT: run this once after cloning)
-uv run pre-commit install
+uv run --with pre-commit pre-commit install
 ```
 
 ## Common Commands
@@ -41,7 +41,7 @@ uv run ruff check .
 uv run ruff check --fix .
 
 # Run pre-commit hooks (runs automatically on commit, or manually)
-uv run pre-commit run --all-files
+uv run --with pre-commit pre-commit run --all-files
 
 ```
 
