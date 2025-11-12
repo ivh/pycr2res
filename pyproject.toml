@@ -3,7 +3,7 @@ name = "pycr2res"
 version = "0.1.0"
 description = "Python recipes for the cr2res pipeline"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.11,<3.14"
 dependencies = [
     "adari-core>=4.1.0",
     "astropy>=7.1.1",
