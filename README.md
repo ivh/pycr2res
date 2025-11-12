@@ -1,6 +1,11 @@
 # PyCr2res
 
-This adds Python-based recipes to the [CRIRES+ pipeline](https://www.eso.org/sci/software/pipelines/cr2res/).
+Python recipes for the [CRIRES+ pipeline](https://www.eso.org/sci/software/pipelines/cr2res/), built on ESO's pyesorex framework.
+
+## Prerequisites
+
+- **CPL library** (required): `apt-get install libcpl-dev` on Ubuntu/Debian
+- **Python 3.12** (3.13 has compatibility issues)
 
 ## Quick start
 
@@ -12,6 +17,9 @@ uv sync
 uv run pyesorex --recipes
 ```
 
-If you are building the whole pipeline, the appropriate place to put the recipe
-files would be `cr2rep/pyrecipes` but to get them installed together with the
-rest, you would need to tell the build system about this directory.
+## Structure
+
+- `pyrecipes/` - Recipe files for pyesorex discovery
+- `pycr2res/` - Python package with shared utilities
+
+See `CLAUDE.md` for development details.
