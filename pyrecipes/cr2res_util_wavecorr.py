@@ -46,8 +46,8 @@ class WaveCorr(cpl.ui.PyRecipe):
             # Read the FITS table from the frame
             try:
                 table = cpl.core.Table.load(frame.file, 1)
-                print(f"  Loaded table with {table.size()} rows")
-                print(f"  Table columns: {table.get_column_names()}")
+                print(f"  Loaded table with {len(table)} rows")
+                print(f"  Table columns: {table.column_names}")
             except Exception as e:
                 print(f"  Error reading table: {e}")
 
