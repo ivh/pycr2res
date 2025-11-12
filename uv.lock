@@ -787,7 +787,7 @@ sdist = { url = "https://ftp.eso.org/pub/dfs/pipelines/libraries/pycpl/pycpl-1.0
 [[package]]
 name = "pycr2res"
 version = "0.1.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "adari-core" },
     { name = "astropy" },

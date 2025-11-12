@@ -1,7 +1,10 @@
 from typing import Any, Dict
 
+import numpy as np
+
 import cpl.core
 import cpl.ui
+from pycr2res.wavecorr import select_lines
 
 
 class WaveCorr(cpl.ui.PyRecipe):
@@ -48,6 +51,18 @@ class WaveCorr(cpl.ui.PyRecipe):
                 table = cpl.core.Table.load(frame.file, 1)
                 print(f"  Loaded table with {len(table)} rows")
                 print(f"  Table columns: {table.column_names}")
+
+                # Extract reference order spectrum and find lines
+                ref_col = f"{ref_order:02d}_01_SPEC"
+                if ref_col in table.column_names:
+                    ref_spec = np.array(table[ref_col])
+                    line_indices = select_lines(ref_spec, threshold=3.0)
+                    print(
+                        f"  Found {len(line_indices)} spectral lines in order {ref_order}"
+                    )
+                else:
+                    print(f"  Warning: Reference order {ref_order} not found in table")
+
             except Exception as e:
                 print(f"  Error reading table: {e}")
 

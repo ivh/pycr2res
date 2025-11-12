@@ -1,3 +1,7 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project]
 name = "pycr2res"
 version = "0.1.0"
@@ -22,8 +26,11 @@ dev = [
     "ruff>=0.9.0",
 ]
 
+[tool.hatch.build.targets.wheel]
+packages = ["pycr2res"]
+
 [tool.uv]
-package = false
+package = true
 
 [[tool.uv.index]]
 url = "https://ftp.eso.org/pub/dfs/pipelines/libraries/"
