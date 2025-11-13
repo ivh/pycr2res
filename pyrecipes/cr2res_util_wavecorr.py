@@ -53,9 +53,8 @@ class WaveCorr(cpl.ui.PyRecipe):
         # Save corrected spectra to FITS files
         for frame_idx, (original_frame, corrected_table) in enumerate(corrected_tables):
             # Generate output filename based on input
-            # Include frame_idx to ensure uniqueness when same file appears multiple times
             base_name = os.path.splitext(os.path.basename(original_frame.file))[0]
-            output_file = f"{base_name}_wavecorr_{frame_idx:03d}.fits"
+            output_file = f"{base_name}_wavecorr.fits"
 
             print(f"Saving corrected spectrum to: {output_file}")
 
