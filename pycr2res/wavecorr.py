@@ -4,11 +4,11 @@ import numpy as np
 from typing import Dict, List, Tuple
 
 
-def extract_order_data(
+def get_order_data(
     table, order_num: int, detector: int = 1
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
-    Extract wavelength, spectrum, and error for a given order.
+    Get wavelength, spectrum, and error for a given order.
 
     Parameters
     ----------
@@ -35,88 +35,67 @@ def extract_order_data(
     return wl, spec, err
 
 
-def cross_correlate_orders(
-    ref_wl: np.ndarray,
-    ref_spec: np.ndarray,
-    target_wl: np.ndarray,
-    target_spec: np.ndarray,
-) -> float:
+
+def select_lines(spec: np.ndarray, err: np.ndarray) -> np.ndarray:
     """
-    Cross-correlate two spectra to find wavelength shift.
+    Select spectral lines for wavelength correction.
+    """
+    # Placeholder - would implement line selection logic
+    line_positions = np.array([]) # positoins of selected lines in pixel space
+    return line_positions
+
+def shift_wl(wavelength: np.ndarray, polynomial: np.ndarray) -> np.ndarray:
+    """
+    Shift wavelength array using polynomial coefficients.
+    """
+    shifted_wl = wavelength + np.polyval(polynomial, wavelength)
+    return shifted_wl
+
+def wavecorr_main(table, ref_order: int) -> Tuple[cpl.core.Table, Dict[int, float]]:
+    """
+    Main function to perform wavelength correction.
 
     Parameters
     ----------
-    ref_wl : np.ndarray
-        Reference wavelength array
-    ref_spec : np.ndarray
-        Reference spectrum
-    target_wl : np.ndarray
-        Target wavelength array
-    target_spec : np.ndarray
-        Target spectrum to align
+    table : cpl.core.Table
+        FITS table with spectral data
+    ref_order : int
+        Reference order number for alignment
 
     Returns
     -------
-    shift : float
-        Wavelength shift in the same units as input wavelengths
+    outtable : cpl.core.Table
+        Table with corrected wavelengths
+    polys : Dict[int, float]
+        Polynomial coefficients for shifts per order
     """
-    # Placeholder for actual cross-correlation implementation
-    # This would use scipy.signal.correlate or similar
-    return 0.0
+    outtable = table.copy()
+    polys = {}
 
+    # Get reference wavelength and spectrum
+    ref_wl, ref_spec, ref_err = get_order_data(table, ref_order)
 
-def select_lines(spec: np.ndarray, threshold: float = 3.0) -> np.ndarray:
-    """
-    Select spectral lines above a certain threshold.
+    # Select lines in reference spectrum
+    ref_lines = select_lines(ref_spec, ref_err)
 
-    Parameters
-    ----------
-    spec : np.ndarray
-        Spectrum array
-    threshold : float
-        Threshold in units of median absolute deviation
+    # Loop over orders to compute shifts and apply corrections
+    for order_num in range(2, 10):  # Example for CRIRES+ orders 2-9
+        wl, spec, err = get_order_data(table, order_num)
 
-    Returns
-    -------
-    indices : np.ndarray
-        Indices of pixels containing spectral lines
-    """
-    # Calculate median and MAD for robust statistics
-    median = np.median(spec)
-    mad = np.median(np.abs(spec - median))
+        # Select lines in current spectrum
+        curr_lines = select_lines(spec, err)
 
-    # Find pixels above threshold
-    indices = np.where(np.abs(spec - median) > threshold * mad)[0]
+        # Compute shift (placeholder logic)
+        shift = np.median(ref_lines - curr_lines) if len(curr_lines) > 0 else 0.0
+        polys[order_num] = shift
 
-    return indices
+        # Apply shift to current spectrum
+        shifted_wl, shifted_spec, shifted_err = shift_spectrum(wl, spec, err, shift)
 
+        # Update output table with shifted data
+        prefix = f"{order_num:02d}_01"  # Assuming detector 1 for simplicity
+        outtable[f"{prefix}_WL"] = shifted_wl
+        outtable[f"{prefix}_SPEC"] = shifted_spec
+        outtable[f"{prefix}_ERR"] = shifted_err
 
-def shift_spectrum(
-    wavelength: np.ndarray, spectrum: np.ndarray, error: np.ndarray, shift: float
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """
-    Apply wavelength shift to spectrum.
-
-    Parameters
-    ----------
-    wavelength : np.ndarray
-        Original wavelength array
-    spectrum : np.ndarray
-        Spectrum to shift
-    error : np.ndarray
-        Error array
-    shift : float
-        Wavelength shift to apply
-
-    Returns
-    -------
-    shifted_wl : np.ndarray
-        Shifted wavelength array
-    shifted_spec : np.ndarray
-        Interpolated spectrum on new wavelength grid
-    shifted_err : np.ndarray
-        Interpolated errors
-    """
-    shifted_wl = wavelength + shift
-    # Placeholder - would interpolate spectrum onto new grid
-    return shifted_wl, spectrum, error
+    return outtable, polys

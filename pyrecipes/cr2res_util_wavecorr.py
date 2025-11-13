@@ -52,17 +52,7 @@ class WaveCorr(cpl.ui.PyRecipe):
                 print(f"  Loaded table with {len(table)} rows")
                 print(f"  Table columns: {table.column_names}")
 
-                # Extract reference order spectrum and find lines
-                ref_col = f"{ref_order:02d}_01_SPEC"
-                if ref_col in table.column_names:
-                    ref_spec = np.array(table[ref_col])
-                    line_indices = select_lines(ref_spec, threshold=3.0)
-                    print(
-                        f"  Found {len(line_indices)} spectral lines in order {ref_order}"
-                    )
-                else:
-                    print(f"  Warning: Reference order {ref_order} not found in table")
-
+                outtable, polys = wavecor_main(table, ref_order)
             except Exception as e:
                 print(f"  Error reading table: {e}")
 
