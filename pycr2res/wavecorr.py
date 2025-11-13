@@ -84,6 +84,21 @@ def wavecorr_main(
         table = cpl.core.Table.load(frame.file, 1)
         tables.append((frame, table))
 
+    # Validate that reference order exists in the data
+    if tables:
+        first_table = tables[0][1]
+        available_orders = set()
+        for col_name in first_table.column_names:
+            if "_WL" in col_name:
+                order_num = int(col_name.split("_")[0])
+                available_orders.add(order_num)
+
+        if ref_order not in available_orders:
+            raise ValueError(
+                f"Reference order {ref_order} not found in data. "
+                f"Available orders: {sorted(available_orders)}"
+            )
+
     # TODO: Implement cross-frame line selection and polynomial fitting
     # For now, process each frame independently with placeholder logic
 

@@ -31,7 +31,7 @@ class WaveCorr(cpl.ui.PyRecipe):
                     name="cr2res_util_wavecorr.ref-order",
                     context="cr2res_util_wavecorr",
                     description="Reference order number for wavelength alignment",
-                    default=1,
+                    default=5,
                 ),
             ]
         )
@@ -40,7 +40,7 @@ class WaveCorr(cpl.ui.PyRecipe):
         self, frameset: cpl.ui.FrameSet, settings: Dict[str, Any]
     ) -> cpl.ui.FrameSet:
         # Get the reference order parameter
-        ref_order = settings.get("cr2res_util_wavecorr.ref-order", 1)
+        ref_order = settings.get("cr2res_util_wavecorr.ref-order", 5)
         print(f"Reference order: {ref_order}")
         print(f"Processing {len(list(frameset))} input frames")
 
