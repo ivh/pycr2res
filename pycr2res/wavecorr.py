@@ -88,8 +88,7 @@ def wavecorr_main(
     # For now, process each frame independently with placeholder logic
 
     for frame_idx, (frame, table) in enumerate(tables):
-        outtable = table.copy()
-
+        # We modify the table in place since each frame has its own loaded table
         # Get reference wavelength and spectrum from this frame
         ref_wl, ref_spec, ref_err = get_order_data(table, ref_order)
 
@@ -119,16 +118,16 @@ def wavecorr_main(
                     # Apply shift to wavelength only (not flux or error)
                     shifted_wl = shift_wl(wl, np.array([shift, 0.0]))
 
-                    # Update output table with shifted wavelength
+                    # Update table with shifted wavelength (in place)
                     prefix = f"{order_num:02d}_{detector:02d}"
-                    outtable[f"{prefix}_WL"] = shifted_wl
+                    table[f"{prefix}_WL"] = shifted_wl
                     # SPEC and ERR remain unchanged
 
                 except Exception:
                     # Skip orders/detectors that don't exist in this frame
                     continue
 
-        # Store corrected table (will be written to file by recipe)
-        tables[frame_idx] = (frame, outtable)
+        # Table has been modified in place, keep the reference
+        tables[frame_idx] = (frame, table)
 
     return tables, polys

@@ -2,6 +2,8 @@ from typing import Any, Dict
 import os
 
 import numpy as np
+from astropy.io import fits
+from astropy.table import Table
 
 import cpl.core
 import cpl.ui
@@ -51,13 +53,16 @@ class WaveCorr(cpl.ui.PyRecipe):
         # Save corrected spectra to FITS files
         for frame_idx, (original_frame, corrected_table) in enumerate(corrected_tables):
             # Generate output filename based on input
+            # Include frame_idx to ensure uniqueness when same file appears multiple times
             base_name = os.path.splitext(os.path.basename(original_frame.file))[0]
-            output_file = f"{base_name}_wavecorr.fits"
+            output_file = f"{base_name}_wavecorr_{frame_idx:03d}.fits"
 
             print(f"Saving corrected spectrum to: {output_file}")
 
             # Save the corrected table as a FITS file
-            corrected_table.save(output_file, mode=cpl.core.Table.SaveMode.CREATE)
+            # save(pheader, header, filename, mode) - mode 2 is standard table save
+            header = cpl.core.PropertyList()
+            corrected_table.save(None, header, output_file, 2)
 
             # Add to output frameset
             output_frame = cpl.ui.Frame(
@@ -67,11 +72,9 @@ class WaveCorr(cpl.ui.PyRecipe):
 
         # Save polynomial coefficients to a FITS table
         if polys:
-            poly_table = self._create_polynomial_table(polys)
             poly_output_file = "wavecorr_polynomials.fits"
             print(f"Saving polynomial coefficients to: {poly_output_file}")
-
-            poly_table.save(poly_output_file, mode=cpl.core.Table.SaveMode.CREATE)
+            self._save_polynomial_table(polys, poly_output_file)
 
             # Add to output frameset
             poly_frame = cpl.ui.Frame(
@@ -83,27 +86,21 @@ class WaveCorr(cpl.ui.PyRecipe):
 
         return output_frameset
 
-    def _create_polynomial_table(
-        self, polys: Dict[str, np.ndarray]
-    ) -> cpl.core.Table:
+    def _save_polynomial_table(
+        self, polys: Dict[str, np.ndarray], filename: str
+    ) -> None:
         """
-        Create a CPL table to store polynomial coefficients.
+        Save polynomial coefficients to a FITS table using astropy.
 
         Parameters
         ----------
         polys : Dict[str, np.ndarray]
             Dictionary mapping frame_order_detector keys to polynomial coefficients
-
-        Returns
-        -------
-        table : cpl.core.Table
-            Table with polynomial coefficients
+        filename : str
+            Output FITS filename
         """
         # Determine the maximum polynomial degree
         max_degree = max(len(coefs) for coefs in polys.values())
-
-        # Create table with appropriate columns
-        table = cpl.core.Table()
 
         # Create lists for each column
         keys_list = []
@@ -128,13 +125,18 @@ class WaveCorr(cpl.ui.PyRecipe):
             for i in range(max_degree):
                 coef_arrays[i].append(coefs[i] if i < len(coefs) else 0.0)
 
-        # Add columns to table
-        table.set_column_array("KEY", np.array(keys_list, dtype=str))
-        table.set_column_array("FRAME_ID", np.array(frame_ids, dtype=int))
-        table.set_column_array("ORDER", np.array(order_nums, dtype=int))
-        table.set_column_array("DETECTOR", np.array(detector_nums, dtype=int))
+        # Create astropy table
+        data_dict = {
+            "KEY": keys_list,
+            "FRAME_ID": frame_ids,
+            "ORDER": order_nums,
+            "DETECTOR": detector_nums,
+        }
 
         for i in range(max_degree):
-            table.set_column_array(f"COEF_{i}", np.array(coef_arrays[i], dtype=float))
+            data_dict[f"COEF_{i}"] = coef_arrays[i]
 
-        return table
+        table = Table(data_dict)
+
+        # Write to FITS
+        table.write(filename, format='fits', overwrite=True)
