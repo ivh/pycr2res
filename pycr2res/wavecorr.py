@@ -2,6 +2,8 @@
 
 import numpy as np
 from typing import Dict, List, Tuple
+import cpl.core
+import cpl.ui
 
 
 def get_order_data(
@@ -51,51 +53,82 @@ def shift_wl(wavelength: np.ndarray, polynomial: np.ndarray) -> np.ndarray:
     shifted_wl = wavelength + np.polyval(polynomial, wavelength)
     return shifted_wl
 
-def wavecorr_main(table, ref_order: int) -> Tuple[cpl.core.Table, Dict[int, float]]:
+def wavecorr_main(
+    frameset: cpl.ui.FrameSet, ref_order: int
+) -> Tuple[cpl.ui.FrameSet, Dict[str, np.ndarray]]:
     """
-    Main function to perform wavelength correction.
+    Main function to perform wavelength correction on a sequence of frames.
 
     Parameters
     ----------
-    table : cpl.core.Table
-        FITS table with spectral data
+    frameset : cpl.ui.FrameSet
+        Input frames with spectral data
     ref_order : int
         Reference order number for alignment
 
     Returns
     -------
-    outtable : cpl.core.Table
-        Table with corrected wavelengths
-    polys : Dict[int, float]
-        Polynomial coefficients for shifts per order
+    output_frameset : cpl.ui.FrameSet
+        Frameset with corrected wavelengths
+    polys : Dict[str, np.ndarray]
+        Polynomial coefficients for shifts. Keys are "frame_index_order_detector"
+        format, values are polynomial coefficient arrays.
     """
-    outtable = table.copy()
+    output_frameset = cpl.ui.FrameSet()
     polys = {}
 
-    # Get reference wavelength and spectrum
-    ref_wl, ref_spec, ref_err = get_order_data(table, ref_order)
+    # Load all tables from frameset
+    tables = []
+    frames_list = list(frameset)
+    for frame in frames_list:
+        table = cpl.core.Table.load(frame.file, 1)
+        tables.append((frame, table))
 
-    # Select lines in reference spectrum
-    ref_lines = select_lines(ref_spec, ref_err)
+    # TODO: Implement cross-frame line selection and polynomial fitting
+    # For now, process each frame independently with placeholder logic
 
-    # Loop over orders to compute shifts and apply corrections
-    for order_num in range(2, 10):  # Example for CRIRES+ orders 2-9
-        wl, spec, err = get_order_data(table, order_num)
+    for frame_idx, (frame, table) in enumerate(tables):
+        outtable = table.copy()
 
-        # Select lines in current spectrum
-        curr_lines = select_lines(spec, err)
+        # Get reference wavelength and spectrum from this frame
+        ref_wl, ref_spec, ref_err = get_order_data(table, ref_order)
 
-        # Compute shift (placeholder logic)
-        shift = np.median(ref_lines - curr_lines) if len(curr_lines) > 0 else 0.0
-        polys[order_num] = shift
+        # Select lines in reference spectrum
+        ref_lines = select_lines(ref_spec, ref_err)
 
-        # Apply shift to current spectrum
-        shifted_wl, shifted_spec, shifted_err = shift_spectrum(wl, spec, err, shift)
+        # Loop over orders to compute shifts and apply corrections
+        for order_num in range(2, 10):  # Example for CRIRES+ orders 2-9
+            for detector in [1]:  # TODO: Extend to detectors 1-3
+                try:
+                    wl, spec, err = get_order_data(table, order_num, detector)
 
-        # Update output table with shifted data
-        prefix = f"{order_num:02d}_01"  # Assuming detector 1 for simplicity
-        outtable[f"{prefix}_WL"] = shifted_wl
-        outtable[f"{prefix}_SPEC"] = shifted_spec
-        outtable[f"{prefix}_ERR"] = shifted_err
+                    # Select lines in current spectrum
+                    curr_lines = select_lines(spec, err)
 
-    return outtable, polys
+                    # Compute shift (placeholder logic)
+                    shift = (
+                        np.median(ref_lines - curr_lines)
+                        if len(curr_lines) > 0
+                        else 0.0
+                    )
+
+                    # Store polynomial (currently just a constant shift)
+                    poly_key = f"{frame_idx:03d}_{order_num:02d}_{detector:02d}"
+                    polys[poly_key] = np.array([shift, 0.0])  # [constant, linear]
+
+                    # Apply shift to wavelength only (not flux or error)
+                    shifted_wl = shift_wl(wl, np.array([shift, 0.0]))
+
+                    # Update output table with shifted wavelength
+                    prefix = f"{order_num:02d}_{detector:02d}"
+                    outtable[f"{prefix}_WL"] = shifted_wl
+                    # SPEC and ERR remain unchanged
+
+                except Exception:
+                    # Skip orders/detectors that don't exist in this frame
+                    continue
+
+        # Store corrected table (will be written to file by recipe)
+        tables[frame_idx] = (frame, outtable)
+
+    return tables, polys
