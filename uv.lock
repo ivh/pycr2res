@@ -776,13 +776,24 @@ wheels = [
 
 [[package]]
 name = "pycpl"
-version = "1.0.3"
-source = { registry = "https://ftp.eso.org/pub/dfs/pipelines/libraries/" }
+version = "1.0.3.post1"
+source = { registry = "https://ivh.github.io/pycpl/simple/" }
 dependencies = [
     { name = "astropy" },
     { name = "numpy" },
 ]
-sdist = { url = "https://ftp.eso.org/pub/dfs/pipelines/libraries/pycpl/pycpl-1.0.3.tar.gz" }
+sdist = { url = "https://github.com/ivh/pycpl/releases/download/v1.0.3.post1/pycpl-1.0.3.post1.tar.gz" }
+wheels = [
+    { url = "https://github.com/ivh/pycpl/releases/download/v1.0.3.post1/pycpl-1.0.3.post1-cp311-cp311-linux_x86_64.whl" },
+    { url = "https://github.com/ivh/pycpl/releases/download/v1.0.3.post1/pycpl-1.0.3.post1-cp311-cp311-macosx_10_15_x86_64.whl" },
+    { url = "https://github.com/ivh/pycpl/releases/download/v1.0.3.post1/pycpl-1.0.3.post1-cp311-cp311-macosx_11_0_arm64.whl" },
+    { url = "https://github.com/ivh/pycpl/releases/download/v1.0.3.post1/pycpl-1.0.3.post1-cp312-cp312-linux_x86_64.whl" },
+    { url = "https://github.com/ivh/pycpl/releases/download/v1.0.3.post1/pycpl-1.0.3.post1-cp312-cp312-macosx_10_15_x86_64.whl" },
+    { url = "https://github.com/ivh/pycpl/releases/download/v1.0.3.post1/pycpl-1.0.3.post1-cp312-cp312-macosx_11_0_arm64.whl" },
+    { url = "https://github.com/ivh/pycpl/releases/download/v1.0.3.post1/pycpl-1.0.3.post1-cp313-cp313-linux_x86_64.whl" },
+    { url = "https://github.com/ivh/pycpl/releases/download/v1.0.3.post1/pycpl-1.0.3.post1-cp313-cp313-macosx_10_15_x86_64.whl" },
+    { url = "https://github.com/ivh/pycpl/releases/download/v1.0.3.post1/pycpl-1.0.3.post1-cp313-cp313-macosx_11_0_arm64.whl" },
+]
 
 [[package]]
 name = "pycr2res"

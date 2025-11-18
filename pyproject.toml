@@ -31,6 +31,7 @@ packages = ["pycr2res"]
 
 [tool.uv]
 package = true
-
-[[tool.uv.index]]
-url = "https://ftp.eso.org/pub/dfs/pipelines/libraries/"
+extra-index-url = [
+    "https://ivh.github.io/pycpl/simple/",
+    "https://ftp.eso.org/pub/dfs/pipelines/libraries/"
+]
