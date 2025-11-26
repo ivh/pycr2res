@@ -60,7 +60,10 @@ The `.python-version` file pins Python 3.12 to avoid segfaults.
 
 ```bash
 # Run tests
-uv run py.test
+uv run python -m pytest
+
+# Run specific test
+uv run python -m pytest tests/test_wavecorr.py -v
 ```
 
 ### Running Recipes with pyesorex
@@ -148,6 +151,24 @@ SOF (Set of Frames) files list input FITS files and their tags:
 ```
 path/to/file.fits TAG_NAME
 ```
+
+## Testing
+
+### IDL Reference Data
+The wavelength correction implementation has been validated against the original IDL code:
+- Test data: `idl/wavecorr_test_data.sav` (input spectra)
+- Reference results: `idl/wavecorr_result_data.sav` (expected output from IDL)
+- Test compares Python output against IDL reference, achieving:
+  - Detectors 1-2: >96% of pixels within 1% agreement
+  - Detector 3: >85% of pixels within 1% agreement
+
+Tests also generate diagnostic plots:
+- `idl/wavecorr_ref_spectra.png` - Reference spectra with detected lines
+- `idl/wavecorr_velocity.png` - Velocity corrections vs wavelength
+
+The IDL `.sav` files can be read in Python using `scipy.io.readsav`. For IDL users,
+test results are also saved as FITS (`wavecorr_python_result.fits`) which can be
+read with `mrdfits` from IDL astrolib.
 
 ## Build System
 - Uses **hatchling** (modern, not setuptools)
