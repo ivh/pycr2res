@@ -21,6 +21,8 @@ by detecting and fitting telluric absorption lines.
   - `--ref-order` (default: 5): Order index (0-based) to use as reference
   - `--ref-phase` (default: 1): Frame index (0-based) to use as reference
   - `--poly-order` (default: 2): Polynomial order for wavelength correction
+  - `--window` (default: 21): Line fitting window size in pixels
+  - `--filter-width` (default: 60): Median filter width for continuum estimation
   - `--plot` (default: false): Generate diagnostic plots
 
 **Output**

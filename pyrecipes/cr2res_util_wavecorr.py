@@ -48,6 +48,18 @@ class WaveCorr(cpl.ui.PyRecipe):
                     default=2,
                 ),
                 cpl.ui.ParameterValue(
+                    name="cr2res_util_wavecorr.window",
+                    context="cr2res_util_wavecorr",
+                    description="Line fitting window size in pixels",
+                    default=21,
+                ),
+                cpl.ui.ParameterValue(
+                    name="cr2res_util_wavecorr.filter-width",
+                    context="cr2res_util_wavecorr",
+                    description="Median filter width for continuum estimation",
+                    default=60.0,
+                ),
+                cpl.ui.ParameterValue(
                     name="cr2res_util_wavecorr.plot",
                     context="cr2res_util_wavecorr",
                     description="Generate diagnostic plots",
@@ -63,6 +75,8 @@ class WaveCorr(cpl.ui.PyRecipe):
         ref_order = settings.get("cr2res_util_wavecorr.ref-order", 5)
         ref_phase = settings.get("cr2res_util_wavecorr.ref-phase", 1)
         poly_order = settings.get("cr2res_util_wavecorr.poly-order", 2)
+        window = settings.get("cr2res_util_wavecorr.window", 21)
+        filter_width = settings.get("cr2res_util_wavecorr.filter-width", 60.0)
         do_plot = settings.get("cr2res_util_wavecorr.plot", False)
 
         # Get input filenames
@@ -72,6 +86,7 @@ class WaveCorr(cpl.ui.PyRecipe):
         print(f"Processing {n_files} input frames")
         print(f"Reference order: {ref_order}, reference phase: {ref_phase}")
         print(f"Polynomial order: {poly_order}")
+        print(f"Line fitting window: {window} pixels, continuum filter width: {filter_width} pixels")
         if do_plot:
             print("Diagnostic plots will be generated")
 
@@ -111,6 +126,8 @@ class WaveCorr(cpl.ui.PyRecipe):
             ref_order=ref_order,
             ref_phase=ref_phase,
             power=poly_order,
+            window=window,
+            filter_width=filter_width,
             return_diagnostics=do_plot
         )
 
