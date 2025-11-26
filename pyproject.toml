@@ -35,3 +35,9 @@ extra-index-url = [
     "https://ivh.github.io/pycpl/simple/",
     "https://ftp.eso.org/pub/dfs/pipelines/libraries/"
 ]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.1",
+    "ruff>=0.14.6",
+]
