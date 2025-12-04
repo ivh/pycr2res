@@ -13,6 +13,7 @@ dependencies = [
     "pycpl>=1.0.3",
     "pyesorex>=1.0.3",
     "scipy>=1.16.3",
+    "charslit",
 ]
 
 [dependency-groups]
@@ -31,6 +32,7 @@ packages = ["pycr2res"]
 
 [tool.uv.sources]
 pycpl = { index = "pycpl" }
+charslit = { path = "CharSlit", editable = true }
 
 [[tool.uv.index]]
 name = "pycpl"

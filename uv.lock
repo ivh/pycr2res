@@ -159,6 +159,33 @@ wheels = [
 ]
 
 [[package]]
+name = "charslit"
+version = "0.1.0"
+source = { editable = "CharSlit" }
+dependencies = [
+    { name = "astropy" },
+    { name = "matplotlib" },
+    { name = "numpy" },
+    { name = "scipy" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "astropy", specifier = ">=5.0.0" },
+    { name = "matplotlib", specifier = ">=3.5.0" },
+    { name = "numpy", specifier = ">=1.20.0" },
+    { name = "scipy", specifier = ">=1.7.0" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "nanobind" },
+    { name = "pre-commit", specifier = ">=3.0.0" },
+    { name = "pytest", specifier = ">=7.0.0" },
+    { name = "ruff", specifier = ">=0.8.0" },
+]
+
+[[package]]
 name = "click"
 version = "8.3.1"
 source = { registry = "https://pypi.org/simple" }
@@ -786,6 +813,7 @@ source = { editable = "." }
 dependencies = [
     { name = "adari-core" },
     { name = "astropy" },
+    { name = "charslit" },
     { name = "edps" },
     { name = "matplotlib" },
     { name = "numpy" },
@@ -805,6 +833,7 @@ dev = [
 requires-dist = [
     { name = "adari-core", specifier = ">=4.1.0" },
     { name = "astropy", specifier = ">=7.1.1" },
+    { name = "charslit", editable = "CharSlit" },
     { name = "edps", specifier = ">=1.6.0" },
     { name = "matplotlib", specifier = ">=3.10.7" },
     { name = "numpy", specifier = ">=2.3.4" },
