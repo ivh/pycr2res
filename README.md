@@ -48,17 +48,45 @@ wavelength = Doppler shift). Typical corrections are 0.1-0.5 km/s.
 
 ### Prerequisites
 - **CPL library** (required): `apt-get install libcpl-dev` on Ubuntu/Debian
+- **CMake and C++ compiler** (required for CharSlit submodule)
 - **Python 3.12** (3.13 has compatibility issues)
 
 ### Clone and run
 ```bash
 git clone https://github.com/ivh/pycr2res
 cd pycr2res
+
+# Initialize submodules (CharSlit library)
+git submodule update --init --recursive
+
+# Install dependencies (this builds CharSlit automatically)
 export PYESOREX_PLUGIN_DIR="$(pwd)/pyrecipes"
 uv sync
+
+# List available recipes
 uv run pyesorex --recipes
 uv run pyesorex --man-page cr2res_util_wavecorr
 ```
+
+### Updating the CharSlit submodule
+
+To update CharSlit to the latest version:
+
+```bash
+# Update the submodule to latest commit
+cd CharSlit
+git pull origin master
+cd ..
+
+# Rebuild with updated code
+uv sync
+
+# Commit the submodule update (updates the commit hash pointer)
+git add CharSlit
+git commit -m "Update CharSlit submodule"
+```
+
+**Why commit?** The pycr2res repo tracks which CharSlit commit to use (just a pointer/hash, not the actual files). When you update CharSlit, you need to commit the new pointer so others get the same version.
 
 ## File Structure
 

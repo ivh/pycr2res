@@ -12,9 +12,12 @@ pycr2res/
   pycr2res/           # Python package (installed via uv)
     __init__.py
     wavecorr.py       # Wavelength correction utilities
+    newextract.py     # Spectrum extraction using CharSlit
   pyrecipes/          # Recipe files for pyesorex discovery
     cr2res_util_hello.py
     cr2res_util_wavecorr.py
+    cr2res_util_newextract.py
+  CharSlit/           # Git submodule for CharSlit library
 ```
 
 **Key Design:** Recipes in `pyrecipes/` are simple CPL interfaces. Business logic goes in the `pycr2res/` package.
@@ -37,11 +40,20 @@ apt-get install libcpl-dev
 # The build will fail without this!
 ```
 
+**For CharSlit submodule:** The CharSlit library (used by `cr2res_util_newextract`) requires:
+- **CMake** (build system)
+- **C++ compiler** with C++17 support
+- nanobind and scikit-build-core (automatically installed by uv)
+
 ### Python Environment
 This project uses **uv** for fast, modern Python package management. Python **3.12** is required (3.13 has matplotlib compatibility issues with pyesorex).
 
 ```bash
+# Initialize git submodules (IMPORTANT: do this first after cloning)
+git submodule update --init --recursive
+
 # Install dependencies (use uv, not pip)
+# This will automatically build and install CharSlit from the submodule
 uv sync
 
 # Install with development dependencies
@@ -52,6 +64,12 @@ uv run --with pre-commit pre-commit install
 ```
 
 The `.python-version` file pins Python 3.12 to avoid segfaults.
+
+**Note on CharSlit submodule:**
+- CharSlit is included as a git submodule in `CharSlit/`
+- `uv sync` automatically builds and installs it in editable mode via the local path dependency in `pyproject.toml`
+- The build process uses scikit-build-core with CMake, compiling C code with nanobind bindings
+- If you update the CharSlit submodule, run `uv sync` again to rebuild
 
 ## Common Commands
 
