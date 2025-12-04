@@ -1,7 +1,3 @@
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
 [project]
 name = "pycr2res"
 version = "0.1.0"
@@ -19,25 +15,28 @@ dependencies = [
     "scipy>=1.16.3",
 ]
 
-[project.optional-dependencies]
-dev = [
-    "pre-commit>=4.0.0",
-    "pytest>=8.0.0",
-    "ruff>=0.9.0",
-]
-
-[tool.hatch.build.targets.wheel]
-packages = ["pycr2res"]
-
-[tool.uv]
-package = true
-extra-index-url = [
-    "https://ivh.github.io/pycpl/simple/",
-    "https://ftp.eso.org/pub/dfs/pipelines/libraries/"
-]
-
 [dependency-groups]
 dev = [
     "pytest>=9.0.1",
     "ruff>=0.14.6",
+    "pre-commit>=4.0.0",
 ]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["pycr2res"]
+
+[tool.uv.sources]
+pycpl = { index = "pycpl" }
+
+[[tool.uv.index]]
+name = "pycpl"
+url = "https://ivh.github.io/pycpl/simple/"
+
+[[tool.uv.index]]
+name = "eso"
+url = "https://ftp.eso.org/pub/dfs/pipelines/libraries/"
+
