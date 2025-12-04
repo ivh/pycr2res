@@ -94,7 +94,7 @@ PYESOREX_PLUGIN_DIR=/home/user/pycr2res/pyrecipes uv run pyesorex --recipes
 # Run a recipe with parameters
 PYESOREX_PLUGIN_DIR=/home/user/pycr2res/pyrecipes \
   uv run pyesorex cr2res_util_wavecorr \
-  --cr2res_util_wavecorr.ref-order=5 \
+  --ref-order=5 \
   test.sof
 ```
 
@@ -145,7 +145,7 @@ class YourRecipe(cpl.ui.PyRecipe):
     def __init__(self):
         self.parameters = cpl.ui.ParameterList([
             cpl.ui.ParameterValue(
-                name="recipe_name.param-name",
+                name="param-name",
                 context="recipe_name",
                 description="...",
                 default=value,
@@ -154,7 +154,7 @@ class YourRecipe(cpl.ui.PyRecipe):
 
     def run(self, frameset: cpl.ui.FrameSet, settings: Dict[str, Any]):
         # Get parameters
-        param = settings.get("recipe_name.param-name", default)
+        param = settings.get("param-name", default)
 
         # Process frames
         for frame in frameset:

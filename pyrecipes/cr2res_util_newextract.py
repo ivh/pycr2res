@@ -24,37 +24,37 @@ class NewExtract(cpl.ui.PyRecipe):
         self.parameters = cpl.ui.ParameterList(
             [
                 cpl.ui.ParameterValue(
-                    name="cr2res_util_newextract.detector",
+                    name="detector",
                     context="cr2res_util_newextract",
                     description="Detector number (1, 2, or 3)",
                     default=1,
                 ),
                 cpl.ui.ParameterValue(
-                    name="cr2res_util_newextract.order-idx",
+                    name="order-idx",
                     context="cr2res_util_newextract",
                     description="Order index (0-based) to process",
                     default=0,
                 ),
                 cpl.ui.ParameterValue(
-                    name="cr2res_util_newextract.osample",
+                    name="osample",
                     context="cr2res_util_newextract",
                     description="Oversampling factor for slit function",
                     default=6,
                 ),
                 cpl.ui.ParameterValue(
-                    name="cr2res_util_newextract.lambda-sp",
+                    name="lambda-sp",
                     context="cr2res_util_newextract",
                     description="Spectrum smoothing parameter (0.0 = no smoothing)",
                     default=0.0,
                 ),
                 cpl.ui.ParameterValue(
-                    name="cr2res_util_newextract.lambda-sl",
+                    name="lambda-sl",
                     context="cr2res_util_newextract",
                     description="Slit function smoothing parameter",
                     default=0.1,
                 ),
                 cpl.ui.ParameterValue(
-                    name="cr2res_util_newextract.maxiter",
+                    name="maxiter",
                     context="cr2res_util_newextract",
                     description="Maximum number of iterations",
                     default=20,
@@ -65,12 +65,12 @@ class NewExtract(cpl.ui.PyRecipe):
     def run(
         self, frameset: cpl.ui.FrameSet, settings: Dict[str, Any]
     ) -> cpl.ui.FrameSet:
-        detector = settings.get("cr2res_util_newextract.detector", 1)
-        order_idx = settings.get("cr2res_util_newextract.order-idx", 0)
-        osample = settings.get("cr2res_util_newextract.osample", 6)
-        lambda_sP = settings.get("cr2res_util_newextract.lambda-sp", 0.0)
-        lambda_sL = settings.get("cr2res_util_newextract.lambda-sl", 0.1)
-        maxiter = settings.get("cr2res_util_newextract.maxiter", 20)
+        detector = settings.get("detector", 1)
+        order_idx = settings.get("order-idx", 0)
+        osample = settings.get("osample", 6)
+        lambda_sP = settings.get("lambda-sp", 0.0)
+        lambda_sL = settings.get("lambda-sl", 0.1)
+        maxiter = settings.get("maxiter", 20)
 
         filenames = [frame.file for frame in frameset]
         n_files = len(filenames)

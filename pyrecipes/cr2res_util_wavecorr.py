@@ -30,37 +30,37 @@ class WaveCorr(cpl.ui.PyRecipe):
         self.parameters = cpl.ui.ParameterList(
             [
                 cpl.ui.ParameterValue(
-                    name="cr2res_util_wavecorr.ref-order",
+                    name="ref-order",
                     context="cr2res_util_wavecorr",
                     description="Reference order index (0-based) for wavelength alignment",
                     default=5,
                 ),
                 cpl.ui.ParameterValue(
-                    name="cr2res_util_wavecorr.ref-phase",
+                    name="ref-phase",
                     context="cr2res_util_wavecorr",
                     description="Reference phase/frame index (0-based)",
                     default=1,
                 ),
                 cpl.ui.ParameterValue(
-                    name="cr2res_util_wavecorr.poly-order",
+                    name="poly-order",
                     context="cr2res_util_wavecorr",
                     description="Polynomial order for wavelength correction",
                     default=2,
                 ),
                 cpl.ui.ParameterValue(
-                    name="cr2res_util_wavecorr.window",
+                    name="window",
                     context="cr2res_util_wavecorr",
                     description="Line fitting window size in pixels",
                     default=21,
                 ),
                 cpl.ui.ParameterValue(
-                    name="cr2res_util_wavecorr.filter-width",
+                    name="filter-width",
                     context="cr2res_util_wavecorr",
                     description="Median filter width for continuum estimation",
                     default=60.0,
                 ),
                 cpl.ui.ParameterValue(
-                    name="cr2res_util_wavecorr.plot",
+                    name="plot",
                     context="cr2res_util_wavecorr",
                     description="Generate diagnostic plots",
                     default=False,
@@ -72,12 +72,12 @@ class WaveCorr(cpl.ui.PyRecipe):
         self, frameset: cpl.ui.FrameSet, settings: Dict[str, Any]
     ) -> cpl.ui.FrameSet:
         # Get parameters
-        ref_order = settings.get("cr2res_util_wavecorr.ref-order", 5)
-        ref_phase = settings.get("cr2res_util_wavecorr.ref-phase", 1)
-        poly_order = settings.get("cr2res_util_wavecorr.poly-order", 2)
-        window = settings.get("cr2res_util_wavecorr.window", 21)
-        filter_width = settings.get("cr2res_util_wavecorr.filter-width", 60.0)
-        do_plot = settings.get("cr2res_util_wavecorr.plot", False)
+        ref_order = settings.get("ref-order", 5)
+        ref_phase = settings.get("ref-phase", 1)
+        poly_order = settings.get("poly-order", 2)
+        window = settings.get("window", 21)
+        filter_width = settings.get("filter-width", 60.0)
+        do_plot = settings.get("plot", False)
 
         # Get input filenames
         filenames = [frame.file for frame in frameset]
