@@ -13,10 +13,12 @@ pycr2res/
     __init__.py
     wavecorr.py       # Wavelength correction utilities
     newextract.py     # Spectrum extraction using CharSlit
+    tellcorr.py       # Telluric correction (forward model fitting)
   pyrecipes/          # Recipe files for pyesorex discovery
     cr2res_util_hello.py
     cr2res_util_wavecorr.py
     cr2res_util_newextract.py
+    cr2res_util_tellcorr.py
   CharSlit/           # Git submodule for CharSlit library
 ```
 
@@ -32,21 +34,13 @@ pycr2res/
 ## Development Setup
 
 ### Prerequisites
-**CRITICAL:** This project requires the ESO **CPL library** (Common Pipeline Library) to be installed at the system level:
-```bash
-# Ubuntu/Debian
-apt-get install libcpl-dev
-
-# The build will fail without this!
-```
-
 **For CharSlit submodule:** The CharSlit library (used by `cr2res_util_newextract`) requires:
 - **CMake** (build system)
 - **C++ compiler** with C++17 support
 - nanobind and scikit-build-core (automatically installed by uv)
 
 ### Python Environment
-This project uses **uv** for fast, modern Python package management. Python **3.12** is required (3.13 has matplotlib compatibility issues with pyesorex).
+This project uses **uv** for fast, modern Python package management.
 
 ```bash
 # Initialize git submodules (IMPORTANT: do this first after cloning)
@@ -63,7 +57,6 @@ uv sync --all-extras
 uv run --with pre-commit pre-commit install
 ```
 
-The `.python-version` file pins Python 3.12 to avoid segfaults.
 
 **Note on CharSlit submodule:**
 - CharSlit is included as a git submodule in `CharSlit/`
@@ -99,6 +92,15 @@ PYESOREX_PLUGIN_DIR=/home/user/pycr2res/pyrecipes \
 ```
 
 **Why `pyrecipes/` only?** Pyesorex recursively scans directories for Python files. If pointed at repo root, it scans `.venv/`, which causes matplotlib import conflicts and segfaults. The `pyrecipes/` subdirectory solves this.
+
+```bash
+# Run telluric correction (requires atmospheric model files)
+PYESOREX_PLUGIN_DIR=/home/user/pycr2res/pyrecipes \
+  uv run pyesorex cr2res_util_tellcorr \
+  --atm-data-dir=$VIPER_ATMOS \
+  --deg-norm=2 --deg-wave=2 \
+  test.sof
+```
 
 ### Data example
 

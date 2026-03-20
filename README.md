@@ -4,7 +4,7 @@ Additional recipes for the [CRIRES+
 pipeline](https://www.eso.org/sci/software/pipelines/cr2res/), built on ESO's
 pyesorex framework.
 
-## Algorithms
+## Recipes
 
 ### cr2res_util_wavecorr
 
@@ -44,12 +44,47 @@ by detecting and fitting telluric absorption lines.
 The polynomial coefficients encode a velocity shift (multiplicative factor on
 wavelength = Doppler shift). Typical corrections are 0.1-0.5 km/s.
 
+### cr2res_util_tellcorr
+
+Forward-models telluric absorption lines to simultaneously fit atmospheric
+transmission, continuum shape, and wavelength calibration for each
+detector-order segment. Based on viper (Koehler & Zechmeister).
+
+Requires atmospheric model files (`stdAtmos_*.fits`), e.g. from a
+[viper](https://github.com/mzechmeister/viper) installation. Set
+`$VIPER_ATMOS` to point to the directory containing them.
+
+**Input**
+- SOF with one or more reduced spectra in standard CRIRES+ table format
+- Parameters
+  - `--atm-data-dir` (**required**): Path to atmospheric model files
+  - `--deg-norm` (default: 3): Polynomial degree for continuum normalization
+  - `--deg-wave` (default: 3): Polynomial degree for wavelength calibration
+  - `--ip` (default: g): Instrumental profile model
+  - `--kapsig` (default: 6): Kappa-sigma clipping threshold
+  - `--telluric` (default: add): Telluric mode (`add` or `add2`)
+  - `--plot` (default: 1): Generate diagnostic PNG
+
+**Output**
+- One FITS file per input with the same structure plus:
+  - Updated `_WL` columns (fitted wavelength calibration)
+  - New `_TELL` columns (telluric transmission model per segment)
+  - New `_CONT` columns (continuum/normalization model per segment)
+- Diagnostic PNG plot (if `--plot=1`)
+
+**Example**
+```bash
+PYESOREX_PLUGIN_DIR=pyrecipes uv run pyesorex cr2res_util_tellcorr \
+  --atm-data-dir=$VIPER_ATMOS \
+  --deg-norm=2 --deg-wave=2 \
+  test.sof
+```
+
 ## Installation
 
 ### Prerequisites
-- **CPL library** (required): `apt-get install libcpl-dev` on Ubuntu/Debian
-- **CMake and C++ compiler** (required for CharSlit submodule)
-- **Python 3.12** (3.13 has compatibility issues)
+- CMake and C++ compiler (only for CharSlit extraction submodule)
+- Python packages get installed by uv (or pip) as below.
 
 ### Clone and run
 ```bash
