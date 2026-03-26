@@ -102,6 +102,25 @@ PYESOREX_PLUGIN_DIR=/home/user/pycr2res/pyrecipes \
   test.sof
 ```
 
+### Running Recipes from Python
+Instead of the shell, recipes can be run programmatically via the Pyesorex API. This is useful for scripting, plotting results, etc.
+
+```python
+from pyesorex.pyesorex import Pyesorex
+
+p = Pyesorex()
+p.recipe = "cr2res_util_tellcorr"
+p.sof_location = "test.sof"
+p.recipe_parameters.update({"atm-data-dir": "/path/to/atmos"})
+products = p.run()  # returns cpl.ui.FrameSet
+
+for frame in products:
+    print(frame.file, frame.tag)  # path and category of each product
+    table = cpl.core.Table.load(frame.file, 1)
+```
+
+`PYESOREX_PLUGIN_DIR` must still be set (env var or before running the script).
+
 ### Data example
 
 You can get an example FITS file from https://neon.physics.uu.se/crires/examplespec.fits
