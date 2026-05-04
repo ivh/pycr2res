@@ -20,6 +20,7 @@ c = 299792.458  # speed of light [km/s]
 # Parameter handling (from vipere)
 # ---------------------------------------------------------------------------
 
+
 class param(float):
     def __new__(cls, value, unc=None):
         instance = super().__new__(cls, value)
@@ -113,14 +114,14 @@ class Params(nesteddict):
 
 def IP_g(vk, s=2.2):
     """Gaussian IP."""
-    ip_k = np.exp(-(vk / s) ** 2 / 2)
+    ip_k = np.exp(-((vk / s) ** 2) / 2)
     ip_k /= ip_k.sum()
     return ip_k
 
 
 def IP_sg(vk, s=2.2, e=2.0):
     """Super Gaussian."""
-    ip_k = np.exp(-abs(vk / s) ** e)
+    ip_k = np.exp(-(abs(vk / s) ** e))
     ip_k /= ip_k.sum()
     return ip_k
 
@@ -142,7 +143,7 @@ def IP_agr(vk, s, a=0):
 
 def IP_bg(vk, s1=2.0, s2=2.0):
     """BiGaussian."""
-    xc = np.sqrt(2 / np.pi) * (-s1**2 + s2**2) / (s1 + s2)
+    xc = np.sqrt(2 / np.pi) * (-(s1**2) + s2**2) / (s1 + s2)
     vck = vk + xc
     ip_k = np.exp(-0.5 * (vck / np.where(vck < 0, s1, s2)) ** 2)
     ip_k /= ip_k.sum()
@@ -153,8 +154,8 @@ def IP_mcg(vk, s0=2, a1=0.1):
     """Multiple central Gaussians."""
     s1 = 4 * s0
     a1 = a1 / 10
-    ip_k = np.exp(-(vk / s0) ** 2)
-    ip_k += a1 * np.exp(-(vk / s1) ** 2)
+    ip_k = np.exp(-((vk / s0) ** 2))
+    ip_k += a1 * np.exp(-((vk / s1) ** 2))
     ip_k = ip_k.clip(0, None)
     ip_k /= ip_k.sum()
     return ip_k
@@ -171,7 +172,7 @@ def IP_mg(vk, *a):
     xl = np.arange(na)
     xm = np.dot(xl, a) / sum(a)
     xc = (dx * (xl - xm))[:, np.newaxis]
-    ip_k = np.exp(-((vk - xc) / s) ** 2)
+    ip_k = np.exp(-(((vk - xc) / s) ** 2))
     ip_k = np.dot(a, ip_k)
     ip_k /= ip_k.sum()
     return ip_k
@@ -211,9 +212,7 @@ class model:
         self.vk = np.arange(-IP_hs, IP_hs + 1) * self.dx * c
         self.lnwave_j_eff = lnwave_j[IP_hs:-IP_hs]
 
-    def __call__(
-        self, pixel, rv=0, norm=[1], wave=[], ip=[], atm=[], bkg=[0], **_kw
-    ):
+    def __call__(self, pixel, rv=0, norm=[1], wave=[], ip=[], atm=[], bkg=[0], **_kw):
         spec_gas = 1
         if len(self.fluxes_molec):
             flux_atm = np.nanprod(
@@ -238,8 +237,10 @@ class model:
 
     def fit(self, pixel, spec_obs, par, sig=None):
         varykeys, varyvals = zip(*par.vary().items())
+
         def S_model(x, *params):
             return self(x, **(par + dict(zip(varykeys, params))))
+
         sigma = sig if sig is not None and len(sig) else None
         params, e_params = curve_fit(
             S_model,
@@ -333,9 +334,7 @@ def load_atm_models(atm_data_dir, wl_min_nm, wl_max_nm, molecules="all"):
             for mol in molec_names:
                 if mol in cols:
                     specs_molec_all[mol].extend(data[mol])
-                    wave_atm_all[mol].extend(
-                        data["lambda"] * (1 + (-0.249 / 3e5))
-                    )
+                    wave_atm_all[mol].extend(data["lambda"] * (1 + (-0.249 / 3e5)))
 
     molec = list(specs_molec_all.keys())
     return specs_molec_all, wave_atm_all, molec
@@ -444,9 +443,7 @@ def fit_segment(
         spec_mol_raw = np.array(specs_molec_all[mol])
         s_mol = slice(*np.searchsorted(wave_mol, [wl_min, wl_max]))
         if len(wave_mol[s_mol]) > 0:
-            spec_mol = np.interp(
-                lnwave_j, np.log(wave_mol[s_mol]), spec_mol_raw[s_mol]
-            )
+            spec_mol = np.interp(lnwave_j, np.log(wave_mol[s_mol]), spec_mol_raw[s_mol])
             specs_molec = np.r_[specs_molec, [spec_mol]]
             if np.nanstd(spec_mol) > 0.0001:
                 par_atm.append((1, np.inf))
@@ -479,6 +476,7 @@ def fit_segment(
 
     def S_star(x):
         return 0 * x + 1
+
     IP_func = IPs[ip_type]
 
     S_mod = model(S_star, lnwave_j, specs_molec, IP_func, IP_hs=iphs, xcen=xcen)
@@ -494,7 +492,11 @@ def fit_segment(
         par.bkg = [0]
 
     if ip_type in ("sg", "ag", "agr", "bg"):
-        par.ip += [2.0] if ip_type in ("sg",) else [1.0 if ip_type in ("ag", "agr") else par.ip[-1]]
+        par.ip += (
+            [2.0]
+            if ip_type in ("sg",)
+            else [1.0 if ip_type in ("ag", "agr") else par.ip[-1]]
+        )
 
     sig = np.ones_like(spec)
     par3 = par
@@ -515,9 +517,7 @@ def fit_segment(
     # pre-fit with Gaussian IP for complex IP types
     if ip_type in ("sg", "ag", "agr", "bg"):
         try:
-            S_modg = model(
-                S_star, lnwave_j, specs_molec, IP_g, IP_hs=iphs, xcen=xcen
-            )
+            S_modg = model(S_star, lnwave_j, specs_molec, IP_g, IP_hs=iphs, xcen=xcen)
             par1 = Params(par, ip=par.ip[0:1])
             par2, _ = S_modg.fit(pixel_ok, spec_ok, par1, sig=sig[i_ok])
             par = par + par2.flat()
@@ -548,9 +548,7 @@ def fit_segment(
             pixel_ok = pixel[i_ok]
             spec_ok = spec[i_ok]
             try:
-                par5, e_params = S_mod.fit(
-                    pixel_ok, spec_ok, par3, sig=sig[i_ok]
-                )
+                par5, e_params = S_mod.fit(pixel_ok, spec_ok, par3, sig=sig[i_ok])
                 par = par5
             except Exception:
                 pass
@@ -561,29 +559,28 @@ def fit_segment(
         rss_tell = np.sum((spec_ok - fmod_tell) ** 2)
         k_tell = len(par.vary())
         n_data = len(pixel_ok)
-        bic_tell = n_data * np.log(rss_tell / n_data) + k_tell * np.log(
-            n_data
-        )
+        bic_tell = n_data * np.log(rss_tell / n_data) + k_tell * np.log(n_data)
 
-        S_mod_notell = model(
-            S_star, lnwave_j, [], IP_func, IP_hs=iphs, xcen=xcen
-        )
+        S_mod_notell = model(S_star, lnwave_j, [], IP_func, IP_hs=iphs, xcen=xcen)
         par_notell = Params(parguess)
         if deg_bkg:
             par_notell.bkg = [0]
         par_notell.ip = [1.5]
 
         try:
-            par_nt, _ = S_mod_notell.fit(
-                pixel_ok, spec_ok, par_notell, sig=sig[i_ok]
-            )
+            par_nt, _ = S_mod_notell.fit(pixel_ok, spec_ok, par_notell, sig=sig[i_ok])
             fmod_notell = S_mod_notell(pixel_ok, **par_nt)
             rss_notell = np.sum((spec_ok - fmod_notell) ** 2)
             k_notell = len(par_nt.vary())
-            bic_notell = n_data * np.log(rss_notell / n_data) + k_notell * np.log(n_data)
+            bic_notell = n_data * np.log(rss_notell / n_data) + k_notell * np.log(
+                n_data
+            )
 
             if bic_notell <= bic_tell + tell_bic:
-                print("    BIC: no-telluric preferred (%.1f vs %.1f)" % (bic_notell, bic_tell))
+                print(
+                    "    BIC: no-telluric preferred (%.1f vs %.1f)"
+                    % (bic_notell, bic_tell)
+                )
                 par_nt.atm = [(np.nan, 0)] * len(par_atm)
                 par = par_nt
                 S_mod = S_mod_notell
@@ -618,6 +615,43 @@ def fit_segment(
 # ---------------------------------------------------------------------------
 
 
+def _fit_dv_polynomial(results, pipeline_wl, prms_max, deg):
+    """Fit a polynomial dv(wavelength) in km/s from orders with good telluric fits.
+
+    The chips are at fixed relative positions, so the residual velocity offset
+    between the vipere telluric solution and the pipeline calibration varies
+    smoothly across all 3 chips. This function fits that offset so it can be
+    extrapolated to orders where the telluric fit failed or was rejected.
+
+    Returns (coeffs, n_good) where coeffs is in numpy.polyfit order (highest
+    degree first), or (None, n_good) if not enough samples.
+    """
+    wl_samples = []
+    dv_samples = []
+    n_good = 0
+    for key, res in results.items():
+        if res["rms"] > prms_max:
+            continue
+        if not any(np.isfinite(p.value) for p in res["params"].atm):
+            continue
+        n_good += 1
+        wl_pipe = pipeline_wl[key]
+        wl_vip = res["wl_new"]
+        n = len(wl_pipe)
+        idx = np.linspace(int(0.05 * n), int(0.95 * n), 20).astype(int)
+        ok = np.isfinite(wl_pipe[idx]) & np.isfinite(wl_vip[idx]) & (wl_pipe[idx] > 0)
+        if not np.any(ok):
+            continue
+        wp = wl_pipe[idx[ok]]
+        wv = wl_vip[idx[ok]]
+        wl_samples.extend(wp)
+        dv_samples.extend((wv - wp) / wp * c)
+    if n_good < 3 or len(wl_samples) < deg + 2:
+        return None, n_good
+    coeffs = np.polyfit(wl_samples, dv_samples, deg)
+    return coeffs, n_good
+
+
 def tellcorr(
     filename,
     atm_data_dir,
@@ -633,6 +667,9 @@ def tellcorr(
     iphs=50,
     telluric="add",
     molecules="all",
+    wl_interp_prms_max=30.0,
+    wl_interp_deg=1,
+    wl_interp_max_dv=100.0,
 ):
     """Run telluric correction on a CRIRES+ FITS file.
 
@@ -644,6 +681,16 @@ def tellcorr(
         Path to directory with stdAtmos_*.fits files.
     output_dir : str
         Output directory for the result file.
+    wl_interp_prms_max : float
+        Per-segment rms% threshold below which a telluric fit is considered
+        good enough to refine the wavelength solution. Orders above this are
+        considered unfitted and get a wavelength solution interpolated from
+        the good orders.
+    wl_interp_deg : int
+        Polynomial degree for the dv(wavelength) interpolation across orders.
+    wl_interp_max_dv : float
+        Maximum allowed |dv| [km/s] of the interpolated correction; if
+        exceeded the order keeps its pipeline wavelength solution.
     Other parameters are passed to fit_segment().
 
     Returns
@@ -681,7 +728,11 @@ def tellcorr(
                     wl_all.extend([np.nanmin(wl), np.nanmax(wl)])
     wl_min_nm, wl_max_nm = np.nanmin(wl_all), np.nanmax(wl_all)
 
-    mol_arg = molecules.split(",") if isinstance(molecules, str) and molecules != "all" else molecules
+    mol_arg = (
+        molecules.split(",")
+        if isinstance(molecules, str) and molecules != "all"
+        else molecules
+    )
     specs_molec_all, wave_atm_all, molec = load_atm_models(
         atm_data_dir, wl_min_nm, wl_max_nm, mol_arg
     )
@@ -689,6 +740,7 @@ def tellcorr(
 
     chips = ("CHIP1.INT1", "CHIP2.INT1", "CHIP3.INT1")
     results = {}
+    pipeline_wl = {}
 
     for chip in chips:
         with fits.open(filename) as hdul:
@@ -697,10 +749,16 @@ def tellcorr(
             wl = data[f"{order}_WL"].astype(np.float64)
             spec = data[f"{order}_SPEC"].astype(np.float64)
             err = data[f"{order}_ERR"].astype(np.float64)
+            pipeline_wl[(chip, order)] = wl
 
             print(f"  {chip} {order}: ", end="", flush=True)
             result = fit_segment(
-                wl, spec, err, specs_molec_all, wave_atm_all, molec,
+                wl,
+                spec,
+                err,
+                specs_molec_all,
+                wave_atm_all,
+                molec,
                 **fit_kwargs,
             )
             if result is not None:
@@ -709,10 +767,30 @@ def tellcorr(
             else:
                 print("skipped")
 
+    # Fit a smooth dv(wavelength) across orders with good telluric fits, so
+    # that orders without a usable fit can still be wavelength-corrected.
+    dv_coeffs, n_good = _fit_dv_polynomial(
+        results, pipeline_wl, wl_interp_prms_max, wl_interp_deg
+    )
+    if dv_coeffs is not None:
+        print(
+            f"dv(wavelength) interpolation: {n_good} good orders, deg={wl_interp_deg}"
+        )
+    else:
+        print(
+            f"dv(wavelength) interpolation: only {n_good} good orders "
+            "(need >=3); unfitted orders keep pipeline WL"
+        )
+
     # write output
     base = os.path.basename(filename)
     name, ext = os.path.splitext(base)
     output_file = os.path.join(output_dir, f"{name}_tellcorr{ext}")
+
+    def _is_good(res):
+        return res["rms"] <= wl_interp_prms_max and any(
+            np.isfinite(p.value) for p in res["params"].atm
+        )
 
     with fits.open(filename) as hdul:
         for chip in chips:
@@ -721,36 +799,47 @@ def tellcorr(
             new_col_list = []
             for order in order_names:
                 key = (chip, order)
-                if key in results:
+                if key in results and _is_good(results[key]):
                     tell = results[key]["tell_model"]
                     cont = results[key]["cont_model"]
                 else:
                     tell = np.ones(n_pixels)
                     cont = np.ones(n_pixels)
                 new_col_list.append(
-                    fits.Column(
-                        name=f"{order}_TELL", format="D", array=tell
-                    )
+                    fits.Column(name=f"{order}_TELL", format="D", array=tell)
                 )
                 new_col_list.append(
-                    fits.Column(
-                        name=f"{order}_CONT", format="D", array=cont
-                    )
+                    fits.Column(name=f"{order}_CONT", format="D", array=cont)
                 )
 
             all_cols = fits.ColDefs(orig_cols) + fits.ColDefs(new_col_list)
-            new_hdu = fits.BinTableHDU.from_columns(
-                all_cols, header=hdul[chip].header
-            )
-            # update WL columns with fitted wavelengths
+            new_hdu = fits.BinTableHDU.from_columns(all_cols, header=hdul[chip].header)
+            # update WL: vipere fit for good orders, dv-interpolated pipeline
+            # WL for the rest (when a dv polynomial is available).
             for order in order_names:
                 key = (chip, order)
-                if key in results:
+                if key in results and _is_good(results[key]):
                     new_hdu.data[f"{order}_WL"] = results[key]["wl_new"]
+                elif dv_coeffs is not None:
+                    wl_pipe = pipeline_wl[key]
+                    dv = np.polyval(dv_coeffs, wl_pipe)
+                    if np.nanmax(np.abs(dv)) > wl_interp_max_dv:
+                        print(
+                            f"  {chip} {order}: dv={np.nanmedian(dv):.1f} km/s "
+                            "exceeds limit, keeping pipeline WL"
+                        )
+                        continue
+                    new_hdu.data[f"{order}_WL"] = wl_pipe * (1 + dv / c)
+                    print(
+                        f"  {chip} {order}: dv-interpolated "
+                        f"({np.nanmedian(dv):+.2f} km/s)"
+                    )
 
             hdul[chip] = new_hdu
 
-        hdul[0].header["HISTORY"] = "Telluric correction applied by cr2res_util_tellcorr"
+        hdul[0].header["HISTORY"] = (
+            "Telluric correction applied by cr2res_util_tellcorr"
+        )
         hdul.writeto(output_file, overwrite=True)
 
     return output_file
@@ -774,12 +863,13 @@ def plot_tellcorr(filename, output_png=None):
     with fits.open(filename) as hdul:
         chips = ["CHIP1.INT1", "CHIP2.INT1", "CHIP3.INT1"]
         cols0 = hdul[chips[0]].columns.names
-        orders = sorted(
-            set(c.rsplit("_", 1)[0] for c in cols0 if c.endswith("_SPEC"))
-        )
+        orders = sorted(set(c.rsplit("_", 1)[0] for c in cols0 if c.endswith("_SPEC")))
 
         fig, (ax1, ax2) = plt.subplots(
-            2, 1, figsize=(16, 7), sharex=True,
+            2,
+            1,
+            figsize=(16, 7),
+            sharex=True,
             gridspec_kw={"height_ratios": [3, 1]},
         )
 
