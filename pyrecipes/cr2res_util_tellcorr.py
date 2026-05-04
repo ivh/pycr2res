@@ -91,6 +91,24 @@ class TellCorr(cpl.ui.PyRecipe):
                     default=50,
                 ),
                 cpl.ui.ParameterValue(
+                    name="wl-interp-prms-max",
+                    context="cr2res_util_tellcorr",
+                    description="rms%% threshold below which a per-order telluric fit is considered good enough to refine its wavelength solution; orders above the threshold are wavelength-corrected by interpolating dv(lambda) from good orders",
+                    default=30.0,
+                ),
+                cpl.ui.ParameterValue(
+                    name="wl-interp-deg",
+                    context="cr2res_util_tellcorr",
+                    description="Polynomial degree for dv(lambda) interpolation across orders",
+                    default=1,
+                ),
+                cpl.ui.ParameterValue(
+                    name="wl-interp-max-dv",
+                    context="cr2res_util_tellcorr",
+                    description="Maximum |dv| [km/s] allowed for the interpolated correction; orders that would receive a larger correction keep their pipeline wavelength solution",
+                    default=100.0,
+                ),
+                cpl.ui.ParameterValue(
                     name="plot",
                     context="cr2res_util_tellcorr",
                     description="Generate diagnostic plot (0=off, 1=on)",
@@ -119,6 +137,9 @@ class TellCorr(cpl.ui.PyRecipe):
         telluric_mode = settings.get("telluric", "add")
         molecules = settings.get("molec", "all")
         iphs = settings.get("iphs", 50)
+        wl_interp_prms_max = settings.get("wl-interp-prms-max", 30.0)
+        wl_interp_deg = settings.get("wl-interp-deg", 1)
+        wl_interp_max_dv = settings.get("wl-interp-max-dv", 100.0)
         do_plot = settings.get("plot", 1)
 
         filenames = [frame.file for frame in frameset]
@@ -152,6 +173,9 @@ class TellCorr(cpl.ui.PyRecipe):
                 iphs=iphs,
                 telluric=telluric_mode,
                 molecules=molecules,
+                wl_interp_prms_max=wl_interp_prms_max,
+                wl_interp_deg=wl_interp_deg,
+                wl_interp_max_dv=wl_interp_max_dv,
             )
             print(f"  -> {output_file}")
             if do_plot:
