@@ -1,9 +1,10 @@
 """End-to-end test of the telluric correction recipe against CRIRES-LM.
 
-Downloads (and caches) a reference output FITS from the CRIRES-LM archive,
-reconstructs the raw observed spectrum from SPEC*TELLUR, runs pycr2res
-tellcorr on it, and verifies the resulting wavelength solution agrees
-with CRIRES-LM's solution at sub-km/s precision.
+Downloads (and caches) the original pre-tellcorr extracted spectrum and the
+CRIRES-LM tellcorr reference output. Runs pycr2res tellcorr on the raw
+input and verifies the resulting wavelength solution agrees with CRIRES-LM's
+at sub-km/s precision. The input WL is uncorrected, so this exercises the
+full correction (typical pipeline shifts here are 0.6-5 km/s per order).
 
 Reference data is fetched on demand into ``$PYCR2RES_TEST_CACHE`` (default:
 ``~/.cache/pycr2res-tests/``) and is not committed to the repository. The
@@ -13,6 +14,7 @@ test is skipped if the data can't be downloaded (e.g. no network).
 from __future__ import annotations
 
 import os
+import shutil
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -23,6 +25,11 @@ from astropy.io import fits
 
 C_KMS = 299792.458
 
+INPUT_FITS_URL = (
+    "https://www.astro.uu.se/crires-lm/files/"
+    "bet_Ori_M4368_2024-12-09_02033/"
+    "cr2res_obs_nodding_extractedA.fits"
+)
 REF_FITS_URL = (
     "https://www.astro.uu.se/crires-lm/files/"
     "bet_Ori_M4368_2024-12-09_02033/"
@@ -54,8 +61,16 @@ def _download(url: str, dest: Path) -> Path:
 
 
 @pytest.fixture(scope="session")
+def crires_lm_input():
+    """Pre-tellcorr extracted spectrum with uncorrected WL (cached)."""
+    return _download(
+        INPUT_FITS_URL, _cache_dir() / "cr2res_obs_nodding_extractedA.fits"
+    )
+
+
+@pytest.fixture(scope="session")
 def crires_lm_ref():
-    """Path to the CRIRES-LM reference FITS (cached after first download)."""
+    """CRIRES-LM tellcorr output, used as the WL reference (cached)."""
     return _download(REF_FITS_URL, _cache_dir() / "bet_Ori_M4368_tellcorrA.fits")
 
 
@@ -73,38 +88,14 @@ def _orders_in(hdul, chip):
     return sorted({c.rsplit("_", 1)[0] for c in cols if c.endswith("_SPEC")})
 
 
-def _make_raw_input(ref_path: Path, dest: Path) -> Path:
-    """Reconstruct raw observed spectrum: SPEC_raw = SPEC_corrected * TELLUR.
-
-    Drops the CONT/TELLUR columns so the file looks like a fresh extraction.
-    """
-    with fits.open(ref_path) as h:
-        out = fits.HDUList([h[0].copy()])
-        for chip in CHIPS:
-            d = h[chip].data
-            cols = []
-            for o in _orders_in(h, chip):
-                with np.errstate(invalid="ignore"):
-                    raw = d[f"{o}_SPEC"] * d[f"{o}_TELLUR"]
-                cols += [
-                    fits.Column(name=f"{o}_SPEC", format="D", array=raw),
-                    fits.Column(name=f"{o}_ERR", format="D", array=d[f"{o}_ERR"]),
-                    fits.Column(name=f"{o}_WL", format="D", array=d[f"{o}_WL"]),
-                ]
-            out.append(
-                fits.BinTableHDU.from_columns(cols, name=chip, header=h[chip].header)
-            )
-        out.writeto(dest, overwrite=True)
-    return dest
-
-
 @pytest.fixture(scope="module")
-def pycr2res_output(crires_lm_ref, atmos_dir, tmp_path_factory):
-    """Run pycr2res tellcorr on the reconstructed raw spectrum once per module."""
+def pycr2res_output(crires_lm_input, atmos_dir, tmp_path_factory):
+    """Run pycr2res tellcorr on the original raw extraction once per module."""
     from pycr2res.tellcorr import tellcorr
 
     workdir = tmp_path_factory.mktemp("tellcorr")
-    raw = _make_raw_input(crires_lm_ref, workdir / "raw.fits")
+    raw = workdir / crires_lm_input.name
+    shutil.copy(crires_lm_input, raw)
     out_path = tellcorr(
         str(raw),
         str(atmos_dir),
@@ -139,8 +130,9 @@ def _collect_dv(ref_path: Path, out_path: Path):
 def test_wavelength_agrees_with_crires_lm(crires_lm_ref, pycr2res_output):
     """Aggregate dv between pycr2res and CRIRES-LM should be sub-km/s.
 
-    Since the input WL is already CRIRES-LM-corrected, the residual is a
-    direct measure of how consistent pycr2res's solution is with theirs.
+    Input WL is the raw uncorrected scale (typical pipeline shift of
+    ~0.6-5 km/s per order), so this measures whether pycr2res
+    independently recovers the same solution CRIRES-LM did.
     """
     _, all_dv = _collect_dv(crires_lm_ref, pycr2res_output)
     median_abs = float(np.median(np.abs(all_dv)))
@@ -152,13 +144,13 @@ def test_wavelength_agrees_with_crires_lm(crires_lm_ref, pycr2res_output):
 
 
 def test_dv_interpolation_fills_failed_orders(crires_lm_ref, pycr2res_output):
-    """Orders that fit_segment fails to fit must get a small dv-interpolated
-    correction, not be left at the input WL.
+    """Orders that fit_segment fails to fit must get a dv-interpolated
+    correction from neighboring orders, not be left at the raw input WL.
 
     For this dataset, 05_01 on all three chips fails the per-order telluric
-    fit. They should still match CRIRES-LM's wavecorr solution to within a
-    handful of m/s, because both implementations interpolate the smooth
-    dv(lambda) across orders.
+    fit (BIC prefers no-telluric). The raw input WL on those orders is off
+    from CRIRES-LM by ~2.8 km/s; interpolation should walk it back to
+    within a couple hundred m/s.
     """
     per_order, _ = _collect_dv(crires_lm_ref, pycr2res_output)
     failed_keys = [(c, "05_01") for c in CHIPS]
@@ -166,7 +158,7 @@ def test_dv_interpolation_fills_failed_orders(crires_lm_ref, pycr2res_output):
     assert found, "expected 05_01 in all chips to be present in output"
     for key in found:
         dv = per_order[key]
-        assert np.max(np.abs(dv)) < 0.1, (
+        assert np.max(np.abs(dv)) < 0.2, (
             f"{key}: max |dv| = {np.max(np.abs(dv)):.3f} km/s, "
             "dv interpolation likely missed this order"
         )
